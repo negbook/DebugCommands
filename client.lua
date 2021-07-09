@@ -6,6 +6,10 @@ RegisterCommand("print", function(source, args, raw)
     local player = PlayerId() 
     local ped = PlayerPedId()
     local coords = GetEntityCoords(ped)
+    local pedmodel = GetEntityModel(ped)
+    local vehentity = IsPedInAnyVehicle(ped) and GetVehiclePedIsIn(ped,false)
+    local vehmodel = IsPedInAnyVehicle(ped) and GetEntityModel(vehentity)
+    
     if a then 
         local text = a:gmatch("`(.-)`")()
         if string.find(a,"`") then 
@@ -13,20 +17,78 @@ RegisterCommand("print", function(source, args, raw)
         else 
             switch(a)(
                 case("coords")(function()
-                        print(coords)
+                        print('coords',coords)
+                end),
+                case("x")(function()
+                        print(coords.x)
+                end),
+                case("y")(function()
+                        print(coords.y)
+                end),
+                case("z")(function()
+                        print(coords.z)
                 end),
                 case("id")(function()
-                        print(player)
+                        print('player',player)
                 end),
-                case("pedid")(function()
-                        print(ped)
+                case("ped")(function()
+                        print("Entity",ped,"Model",pedmodel)
+                        local front = GetOffsetFromEntityInWorldCoords(ped,0.0,5.0,0.0)
+                        local found,closestped = GetClosestPed(front.x,front.y,front.z ,10.0 ,true ,false ,true ,true ,-1 )
+                        if found then 
+                            print("Closest",closestped,"Model",GetEntityModel(closestped))
+                        end 
                 end),
-                case("model")(function()
-                        print(IsPedInAnyVehicle(ped) and GetEntityModel(GetVehiclePedIsIn(ped,false)) or GetEntityModel(ped))
+                case("model")(function()  
+                    if IsPedInAnyVehicle(ped) then 
+                        print('Model',vehmodel)
+                    else 
+                        print('Model',pedmodel)
+                    end
+                end),
+                case("health")(function()
+                    if IsPedInAnyVehicle(ped) then  
+                        print("Body",GetVehicleBodyHealth(vehentity),"Engine",GetVehicleEngineHealth(vehentity),"PetrolTank",GetVehiclePetrolTankHealth(vehentity),"Wheel",GetVehicleWheelHealth(vehentity))
+                    else  
+                        print("Health",GetEntityHealth(ped),"/","MaxHealth",GetEntityMaxHealth(ped),"MaxHealth",GetPedMaxHealth(ped),"RechargeLimit",GetPlayerHealthRechargeLimit(player))
+                    end 
+                end),
+                case("veh")(function()  
+                    if IsPedInAnyVehicle(ped) then 
+                        print("Entity",vehentity,"Model",vehmodel,"Names",GetDisplayNameFromVehicleModel(vehmodel),GetStreetNameFromHashKey(vehmodel),GetLabelText(vehmodel))
+                    else 
+                        local front = GetOffsetFromEntityInWorldCoords(ped,0.0,5.0,0.0)
+                        if IsAnyVehicleNearPoint(front,10.0) then 
+                            local closestveh = GetClosestVehicle(front, 10.0, 0, 231807) --cars
+                            if closestveh == 0 then closestveh = GetClosestVehicle(front, 10.0, 0, 391551)  end --airs 
+                            if closestveh~=0  then 
+                                local closestvehmodel = GetEntityModel(closestveh)
+                                print("Closest",closestveh,"Model",closestvehmodel,"Names",GetDisplayNameFromVehicleModel(closestvehmodel),GetStreetNameFromHashKey(closestvehmodel),GetLabelText(closestvehmodel)) 
+                            end
+                        end 
+                    end
+                end),
+                case("modelscale")(function()
+                    if IsPedInAnyVehicle(ped) then  
+                        print(GetModelDimensions(vehmodel))
+                    else  
+                        print(GetModelDimensions(pedmodel))
+                    end 
+                end),
+                case("name")(function()
+                    if IsPedInAnyVehicle(ped) then  
+                        print("Names",GetDisplayNameFromVehicleModel(vehmodel),GetStreetNameFromHashKey(vehmodel),GetLabelText(vehmodel)) -- why GetMakeNameFromVehicleModel crashs?
+                    else 
+                        print("Name",GetPlayerName(player))
+                    end 
                 end),
                 case("groundz")(function()
                         local found , z , offset = GetGroundZAndNormalFor_3dCoord(coords.x,coords.y,coords.z)
-                        print(found and ("Found:"..found,"GroundZ:"..z,"Offset:"..offset) or "Not Found GroundZ")
+                        if found then 
+                            print("Found",found,"GroundZ",z,"Offset",offset)
+                        else 
+                            print("Not Found GroundZ")
+                        end 
                 end)
                 
             )
