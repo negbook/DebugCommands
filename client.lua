@@ -15,11 +15,11 @@ RegisterCommand("print", function(source, args, raw)
         local text = a:gmatch("`(.-)`")()
         if string.find(a,"`") then 
             local hash = GetHashKey(text)
-            print(hash,string.format("0x%x", hash))
+            print("Hash",hash,"Hash in HEX",string.format("0x%x", hash))
         elseif string.find(a,"0x")==1 then 
-            print(tonumber(a))
+            print("Hex",a,"Number",tonumber(a))
         elseif tostring(tonumber(a)) == tostring(a) then 
-            print(a,string.format("0x%x", tonumber(a)))
+            print("Number",a,"HEX",string.format("0x%x", tonumber(a)))
         else 
             switch(a)(
                 case("coords")(function()
