@@ -13,11 +13,23 @@ RegisterCommand("print", function(source, args, raw)
     if a then 
         local text = a:gmatch("`(.-)`")()
         if string.find(a,"`") then 
-            print(GetHashKey(text))
+            local hash = GetHashKey(text)
+            print(hash,string.format("0x%x", hash))
+        elseif string.find(a,"0x")==1 then 
+            print(tonumber(a))
+        elseif tostring(tonumber(a)) == tostring(a) then 
+            print(a,string.format("0x%x", tonumber(a)))
         else 
             switch(a)(
                 case("coords")(function()
                         print('coords',coords)
+                end),
+                case("zone")(function()
+                        print('zone',GetNameOfZone(coords))
+                end),
+                case("street")(function()
+                    local street1,street2 = GetStreetNameAtCoord(coords.x,coords.y,coords.z)
+                        print('Street',street1,street2,'Names',GetStreetNameFromHashKey(street1),GetStreetNameFromHashKey(street2))
                 end),
                 case("x")(function()
                         print(coords.x)
