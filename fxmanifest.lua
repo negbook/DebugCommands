@@ -4,3 +4,4 @@ client_scripts {
 "functions.lua",
 "client.lua"
 }
+server_script "server.lua"
