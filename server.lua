@@ -23,7 +23,18 @@ AddEventHandler("writelog:"..GetCurrentResourceName(), function (strings)
         print(err)
     end 
 end)
-
+AddEventHandler('onResourceStart', function(resourceName)
+  if (GetCurrentResourceName() ~= resourceName) then
+    return
+  end
+  local f,err = io.open(GetResourcePath(GetCurrentResourceName())..'/log/gameplayingprints.log','w+')
+	if f then 
+		f:write("\n")
+		f:close()
+    else 
+        print(err)
+    end 
+end)
 AddEventHandler('onResourceStop', function(resourceName)
   if (GetCurrentResourceName() ~= resourceName) then
     return
