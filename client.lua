@@ -9,7 +9,8 @@ RegisterCommand("print", function(source, args, raw)
     local pedmodel = GetEntityModel(ped)
     local vehentity = IsPedInAnyVehicle(ped) and GetVehiclePedIsIn(ped,false)
     local vehmodel = IsPedInAnyVehicle(ped) and GetEntityModel(vehentity)
-    
+    local _print = function(...) TriggerServerEvent('writelog:'..GetCurrentResourceName(),table.concat({...},",")) return print(...) end  
+    local print = _print
     if a then 
         local text = a:gmatch("`(.-)`")()
         if string.find(a,"`") then 
@@ -22,7 +23,7 @@ RegisterCommand("print", function(source, args, raw)
         else 
             switch(a)(
                 case("coords")(function()
-                        print('coords',coords)
+                        print('coords',coords,'heading',GetEntityHeading(ped))
                 end),
                 case("zone")(function()
                         print('zone',GetNameOfZone(coords))
