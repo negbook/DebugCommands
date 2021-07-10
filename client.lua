@@ -1,5 +1,21 @@
 local case = {} --cfx-switchcase by negbook https://github.com/negbook/cfx-switchcase/blob/main/cfx-switchcase.lua
 local switch = setmetatable({},{__call=function(a,b)case=setmetatable({},{__call=function(a,b)return a[b]end,__index=function(a,c)return c and c==b and setmetatable({},{__call=function(a,d)d()end})or function()end end})return a[b]end,__index=function(a,c)return setmetatable({},{__call=function(a,...)end})end})
+local resname,TriggerServerCallback = GetCurrentResourceName()
+TriggerServerCallback = function(name,fn,...)
+    local resname = GetCurrentResourceName()
+    local a 
+    local hash = GetHashKey(name)
+    local ticketClient = tostring(GetGameTimer())..tostring(NetworkGetRandomIntRanged(0,65535))
+    RegisterNetEvent(resname..":"..hash..":".."ResultCallback"..ticketClient)
+    a = AddEventHandler(resname..":"..hash..":".."ResultCallback"..ticketClient, function (...)
+        fn(...)
+        RemoveEventHandler(a)
+    end)
+    TriggerServerEvent(resname..":"..hash..":".."RequestCallback",ticketClient,...)
+end 
+
+
+
 RegisterCommand("tpm", function(source,args)
     local WaypointHandle = GetFirstBlipInfoId(8)
     if DoesBlipExist(WaypointHandle) then
@@ -65,6 +81,35 @@ end)
 RegisterCommand("unnui", function(source, args, raw) 
     SetNuiFocus(false,false)
 end)
+
+RegisterCommand("getped", function(source, args, raw) 
+    local ped = PlayerPedId()
+    local coords = GetEntityCoords(ped)
+    local randomped = GetRandomPedAtCoord(coords,50.0,50.0,50.0,-1)
+    if DoesEntityExist(randomped) then 
+        local front = GetOffsetFromEntityInWorldCoords(ped,0.0,5.0,0.0)
+        SetEntityCoordsNoOffset(randomped, front.x,front.y,front.z )
+        print('Ped',randomped,'Model',GetEntityModel(randomped))
+    end 
+end)
+
+RegisterCommand("getvehicle", function(source, args, raw) 
+    local ped = PlayerPedId()
+    local coords = GetEntityCoords(ped)
+    if IsAnyVehicleNearPoint(coords,50.0) then 
+        local randomveh = GetRandomVehicleInSphere(coords,50.0,0.0,0,231807)
+        if not DoesEntityExist(randomveh) then randomveh = GetRandomVehicleInSphere(coords,50.0,0.0,0,391551) end 
+        if DoesEntityExist(randomveh) then 
+            local front = GetOffsetFromEntityInWorldCoords(ped,0.0,5.0,0.0)
+            SetEntityCoordsNoOffset(randomveh, front.x,front.y,front.z )
+            print('Vehicle',randomveh,'Model',GetEntityModel(randomveh))
+        end 
+    end 
+end)
+
+
+
+
 RegisterCommand("print", function(source, args, raw)   
     local a = args[1]
     local player = PlayerId() 
@@ -73,6 +118,7 @@ RegisterCommand("print", function(source, args, raw)
     local pedmodel = GetEntityModel(ped)
     local vehentity = IsPedInAnyVehicle(ped) and GetVehiclePedIsIn(ped,false)
     local vehmodel = IsPedInAnyVehicle(ped) and GetEntityModel(vehentity)
+    local rawprint = print
     local _print = function(...) TriggerServerEvent('writelog:'..GetCurrentResourceName(),table.concat({...},",")) return print(...) end  
     local print = _print
     if a then 
@@ -87,7 +133,18 @@ RegisterCommand("print", function(source, args, raw)
         else 
             switch(a)(
                 case("coords")(function()
-                        print('coords',coords,'heading',GetEntityHeading(ped))
+                        print('coords',coords,'heading',GetEntityHeading(ped),'rotation',GetEntityRotation(ped))
+                        if IsPedInAnyVehicle(ped) then 
+                            print('[Veh]coords',GetEntityCoords(vehentity),'heading',GetEntityHeading(vehentity),'rotation',GetEntityRotation(vehentity))
+                        end 
+                end),
+                case("time")(function()
+                        print("GameTimer",GetGameTimer(),"TimeStep",Timestep())
+                        print("Networked Time",table.concat({GetUtcTime()}," "))
+                        print("In-Game Time",table.concat({GetClockYear(),GetClockMonth(),GetClockDayOfMonth(),GetClockHours(),GetClockMinutes(),GetClockSeconds()}," "))
+                        TriggerServerCallback('servertime',function (...)
+                            print("Server Time",...)
+                        end)
                 end),
                 case("zone")(function()
                         print('zone',GetNameOfZone(coords))
